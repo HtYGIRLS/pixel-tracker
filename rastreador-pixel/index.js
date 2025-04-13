@@ -1,44 +1,18 @@
 const express = require('express');
-const axios = require('axios');
-const app = express();
 const fs = require('fs');
+const app = express();
 const port = process.env.PORT || 3000;
 
-app.get('/pixel', async (req, res) => {
-  const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+// Middleware para obtener la IP real detrás de proxies
+app.set('trust proxy', true);
+
+app.get('/pixel', (req, res) => {
+  const ip = req.ip;
+  const userAgent = req.headers['user-agent'];
   const usuario = req.query.usuario || 'desconocido';
-  const fecha = new Date().toISOString();
 
-  try {
-    const geo = await axios.get(`http://ip-api.com/json/${ip}`);
+  // Simular ubicación (en versión real usarías alguna API para IP lookup)
+  const date = new Date().toISOString();
+  const log = `Pixel abierto por ${ip} - Usuario: ${usuario} - Navegador: ${userAgent} - Fecha: ${date}\n`;
 
-    const data = {
-      usuario,
-      ip,
-      fecha,
-      geo: geo.data
-    };
-
-    fs.appendFileSync('log.txt', JSON.stringify(data) + '\n');
-  } catch (err) {
-    console.error('Error al obtener ubicación:', err.message);
-  }
-
-  const img = Buffer.from(
-    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADElEQVR4nGNgYGD4DwABBAEAf0INPwAAAABJRU5ErkJggg==',
-    'base64'
-  );
-  res.writeHead(200, {
-    'Content-Type': 'image/png',
-    'Content-Length': img.length
-  });
-  res.end(img);
-});
-
-app.get('/', (req, res) => {
-  res.send('Servidor de rastreo activo 🚀');
-});
-
-app.listen(port, () => {
-  console.log(`Servidor activo en http://localhost:${port}`);
-});
+  console.log(log); // Muestra en consola
